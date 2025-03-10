@@ -2,94 +2,89 @@
 
 Import notes from Xiaohongshu (小红书) into your Obsidian vault with ease. This plugin extracts titles, content, images, videos, and tags from Xiaohongshu share links, organizing them into neatly formatted Markdown files.
 
-## Features
+## Highlighted Features
 
-- **Import Notes**: Paste a Xiaohongshu share link (e.g., `http://xhslink.com/a/...`) to import its content.
-- **Media Handling**:
-	- Option to download images and videos locally to a `media` subfolder (e.g., `XHS Notes/media/`).
-	- Uses relative paths (`../media/`) for local media or online URLs if downloading is disabled.
-- **Video Support**: Embeds videos with `<video>` tags for video notes, falling back to a cover image if the video URL is unavailable.
-- **Content Extraction**: Pulls titles, descriptions, and tags from notes, cleaning up hashtags and formatting them in a code block.
-- **Categorization**: Assign notes to user-defined categories via a chip-based selection UI in the import modal.
-- **Flexible Storage**:
-	- Configurable base folder (default: `XHS Notes`).
-	- Notes are saved in category subfolders (e.g., `XHS Notes/搞笑/[V]Note-Title.md` for video notes).
-- **Settings**:
-	- Set a default folder for imports.
-	- Toggle default media download behavior (overridable per import).
-	- Manage a list of categories with add/edit/remove and reorder functionality.
-- **Frontmatter**: Adds metadata (title, source URL, date, imported timestamp, category) to each note.
+1. **Import Notes Without Media Downloads**: Save storage by importing Xiaohongshu notes with online links to pictures and videos, avoiding local downloads.
+2. **Import Notes With Offline Media**: Download pictures and videos locally for full note access without an internet connection.
+3. **Enhanced Organization**: Organize notes in Obsidian with a structured folder system and categories, surpassing Xiaohongshu's native saving capabilities.
+4. **Preserve Source Links**: Retain the original Xiaohongshu URL in each note for easy access to the source and commenting anytime.
+5. **Category-Based Organization**: Assign notes to customizable categories (e.g., 美食, 旅行, Others) for efficient note management.
 
 ## Installation
 
-### Manual Installation
+### Option 1: Download from GitHub Release
+1. Visit the [latest release](https://github.com/bnchiang96/Xiaohongshu-Importer-for-Obsidian/releases/latest) on GitHub.
+2. Download the `xhs-importer.zip` file, which contains `main.js` and `manifest.json`.
+3. Extract the ZIP file to your Obsidian plugins folder:
+   ```
+   unzip xhs-importer.zip -d /path/to/your-vault/.obsidian/plugins/Xiaohongshu-Importer-for-Obsidian/
+   ```
+	- Ensure the folder name matches the plugin ID: `Xiaohongshu-Importer-for-Obsidian`.
+4. Enable the plugin in Obsidian:
+	- Go to `Settings > Community Plugins`.
+	- Turn off "Safe Mode" if enabled.
+	- Find "Xiaohongshu Importer" and toggle it on.
 
-1. **Clone or Download**:
-	- Clone this repository or download the ZIP file:
-	  ```
-	  git clone https://github.com/yourusername/xhs-importer.git
-	  ```
-	- Or download from the releases page (once published).
-2. **Copy Files**:
-	- Copy `main.js`, `manifest.json`, and (optionally) `styles.css` to your vault’s plugin folder:
-	  ```
-	  cp main.js manifest.json /path/to/your-vault/.obsidian/plugins/xhs-importer/
-	  ```
-	- If the `xhs-importer` folder doesn’t exist, create it first:
-	  ```
-	  mkdir /path/to/your-vault/.obsidian/plugins/xhs-importer
-	  ```
-3. **Enable Plugin**:
-	- Open Obsidian, go to `Settings > Community Plugins`.
-	- Ensure "Safe Mode" is off.
-	- Find "Xiaohongshu Importer" in the list and toggle it on.
-
-### Development Setup (Optional)
-
-For those who want to modify or build the plugin:
-
-1. **Install Dependencies**:
+### Option 2: Build from Source
+1. **Clone the Repository**:
+   ```
+   git clone https://github.com/bnchiang96/Xiaohongshu-Importer-for-Obsidian.git
+   cd Xiaohongshu-Importer-for-Obsidian
+   ```
+2. **Install Dependencies**:
 	- Ensure Node.js and Yarn are installed.
 	- Run:
 	  ```
 	  yarn install
 	  ```
-2. **Build**:
+3. **Build the Plugin**:
 	- Compile the TypeScript code:
+	  ```
+	  yarn build
+	  ```
+	- This generates `main.js` (not tracked in the repo due to `.gitignore`).
+4. **Install in Obsidian**:
+	- Copy the built files to your vault:
+	  ```
+	  mkdir -p /path/to/your-vault/.obsidian/plugins/Xiaohongshu-Importer-for-Obsidian/
+	  cp main.js manifest.json /path/to/your-vault/.obsidian/plugins/Xiaohongshu-Importer-for-Obsidian/
+	  ```
+	- Enable the plugin as in Option 1.
+
+### Development Setup (Optional)
+- For live development with hot reload:
+	- Install the [Obsidian Hot Reload plugin](https://github.com/pjeby/hot-reload).
+	- Run:
 	  ```
 	  yarn dev
 	  ```
-	- Copy the output (`main.js`) and `manifest.json` to your plugin folder as above.
-3. **Hot Reload** (Optional):
-	- Install the [Obsidian Hot Reload plugin](https://github.com/pjeby/hot-reload).
-	- Use `yarn dev` to watch for changes and auto-reload in Obsidian.
+	- Changes will auto-reload in Obsidian.
 
 ## Usage
 
 1. **Trigger Import**:
-	- Click the ribbon icon (book) on the left sidebar, or use the command `Import Xiaohongshu Note` via the Command Palette (Ctrl/Cmd + P).
+	- Click the ribbon icon (book) or use the command `Import Xiaohongshu Note` (Ctrl/Cmd + P).
 2. **Enter Share Text**:
-	- Paste the Xiaohongshu share text containing the URL (e.g., "64 不叫小黄了发布了一篇小红书笔记，快来看看吧！http://xhslink.com/a/...").
+	- Paste Xiaohongshu share text (e.g., "64 不叫小黄了发布了一篇小红书笔记... http://xhslink.com/a/...").
 3. **Select Options**:
-	- Choose a category from the list.
-	- Check "Download media locally for this import" to override the default setting.
+	- Choose a category (e.g., 搞笑, Others).
+	- Check "Download media locally" for offline access (optional).
 4. **Import**:
-	- Click "Import" or press Enter to process the note.
-	- The note will be created and opened in a new tab.
+	- Click "Import" or press Enter to create and open the note.
 
 ## Configuration
 
 - Open `Settings > Community Plugins > Xiaohongshu Importer`:
-	- **Default Folder**: Set where notes and media are saved (e.g., `XHS Notes`).
-	- **Download Media**: Toggle default behavior for downloading media (overridable per import).
-	- **Categories**: Add, edit, remove, or reorder categories for organizing notes.
+	- **Default Folder**: Set the base folder (e.g., `XHS Notes`).
+	- **Download Media**: Toggle default media download behavior (overridable per import).
+	- **Categories**: Manage categories (default: 美食, 旅行, 娱乐, 知识, 工作, 情感, 个人成长, 优惠, 搞笑, 育儿, Others).
 
 ## Example Output
 
-For a note with title `柔佛人狂喜！新山终于有“地铁”了？`:
+For a note titled `柔佛人狂喜！新山终于有“地铁”了？`:
 
 - **File**: `XHS Notes/搞笑/柔佛人狂喜！新山终于有“地铁”了？.md`
-- **Content**:
+- **Content** (with media downloaded):
   ```
   ---
   title: 柔佛人狂喜！新山终于有“地铁”了？
@@ -111,10 +106,10 @@ For a note with title `柔佛人狂喜！新山终于有“地铁”了？`:
 
 ## Contributing
 
-Feel free to submit issues or pull requests on GitHub. To build locally:
+Submit issues or pull requests on [GitHub](https://github.com/bnchiang96/Xiaohongshu-Importer-for-Obsidian). To build locally:
 - Clone the repo.
-- Run `yarn install` and `yarn dev`.
-- Test in your Obsidian vault.
+- Run `yarn install` and `yarn build`.
+- Test in your vault.
 
 ## License
 
