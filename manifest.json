@@ -1,9 +1,10 @@
 {
-	"id": "xhs-importer",
+	"id": "Xiaohongshu-Importer-for-Obsidian",
 	"name": "Xiaohongshu Importer",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Imports notes from Xiaohongshu into Obsidian",
+	"description": "Import Xiaohongshu notes into Obsidian with media and categorization.",
 	"author": "Rocher Lee",
-	"isDesktopOnly": true
+	"authorUrl": "https://github.com/bnchiang96",
+	"isDesktopOnly": false
 }

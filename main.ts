@@ -36,7 +36,7 @@ export default class XHSImporterPlugin extends Plugin {
 
 		// Add command for importing notes via command palette
 		this.addCommand({
-			id: "import-xhs-note",
+			id: "Xiaohongshu-Importer-for-Obsidian",
 			name: "Import Xiaohongshu Note",
 			callback: async () => {
 				const input = await this.promptForShareText();
