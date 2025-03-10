@@ -1,134 +1,565 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Plugin, Notice, Modal, requestUrl, PluginSettingTab, App, Setting, WorkspaceLeaf } from "obsidian";
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface XHSImporterSettings {
+	defaultFolder: string;
+	categories: string[];
+	lastCategory: string;
+	downloadMedia: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
+const DEFAULT_SETTINGS: XHSImporterSettings = {
+	defaultFolder: "XHS Notes",
+	categories: ["美食", "旅行", "娱乐", "知识", "工作", "情感", "个人成长", "优惠", "搞笑", "育儿", "Others"],
+	lastCategory: "",
+	downloadMedia: false,
+};
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class XHSImporterPlugin extends Plugin {
+	settings: XHSImporterSettings;
 
+	// Plugin lifecycle: Load settings and register UI/command elements
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+		// Add ribbon icon to trigger note import
+		this.addRibbonIcon("book", "Import Xiaohongshu Note", async () => {
+			const input = await this.promptForShareText();
+			if (input && input.text) {
+				const url = this.extractURL(input.text);
+				if (url) {
+					await this.importXHSNote(url, input.category, input.downloadMedia);
+				} else {
+					new Notice("No valid Xiaohongshu URL found in the text.");
 				}
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+		// Add command for importing notes via command palette
+		this.addCommand({
+			id: "import-xhs-note",
+			name: "Import Xiaohongshu Note",
+			callback: async () => {
+				const input = await this.promptForShareText();
+				if (input && input.text) {
+					const url = this.extractURL(input.text);
+					if (url) {
+						await this.importXHSNote(url, input.category, input.downloadMedia);
+					} else {
+						new Notice("No valid Xiaohongshu URL found in the text.");
+					}
+				}
+			},
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// Register settings tab
+		this.addSettingTab(new XHSImporterSettingTab(this.app, this));
 	}
 
-	onunload() {
-
-	}
-
+	// Load plugin settings from storage
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
+	// Save plugin settings to storage
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	// Prompt user for share text and category via modal
+	async promptForShareText(): Promise<{ text: string | null; category: string; downloadMedia: boolean } | null> {
+		return new Promise((resolve) => {
+			const modal = new XHSInputModal(this.app, this.settings, (result) => resolve(result));
+			modal.open();
+		});
+	}
+
+	// Extract Xiaohongshu URL from share text
+	extractURL(shareText: string): string | null {
+		const urlMatch = shareText.match(/http:\/\/xhslink\.com\/a\/[^\s,，]+/);
+		return urlMatch ? urlMatch[0] : null;
+	}
+
+	// Sanitize title for media filenames, removing emojis and special characters
+	sanitizeFilename(title: string): string {
+		// Keep only alphanumeric, Chinese characters, spaces, and safe symbols (-, _)
+		let sanitized = title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5\s-_]/g, "").trim();
+		sanitized = sanitized.replace(/\s+/g, "-");
+		sanitized = sanitized.length > 0 ? sanitized : "Untitled";
+		return sanitized.substring(0, 50); // Limit to 50 chars
+	}
+
+	// Download media file and save to vault
+	async downloadMediaFile(url: string, folderPath: string, filename: string): Promise<string> {
+		try {
+			const response = await fetch(url);
+			if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+			const blob = await response.blob();
+			const arrayBuffer = await blob.arrayBuffer();
+			const filePath = `${folderPath}/${filename}`;
+			await this.app.vault.adapter.writeBinary(filePath, arrayBuffer);
+			return filename; // Return filename for Markdown reference
+		} catch (error) {
+			console.log(`Failed to download media from ${url}: ${error.message}`);
+			new Notice(`Failed to download media: ${error.message}`);
+			return url; // Fallback to original URL
+		}
+	}
+
+	// Main function to import a Xiaohongshu note
+	async importXHSNote(url: string, category: string, downloadMedia: boolean) {
+		try {
+			const response = await requestUrl({ url });
+			const html = response.text;
+
+			// Extract note details
+			const title = this.extractTitle(html);
+			const videoUrl = this.extractVideoUrl(html);
+			const images = this.extractImages(html);
+			const content = this.extractContent(html);
+			const isVideo = this.isVideoNote(html);
+
+			// Build frontmatter and initial Markdown
+			const noteDate = new Date().toISOString().split("T")[0];
+			const importedAt = new Date().toLocaleString();
+			let markdown = `---
+title: ${title}
+source: ${url}
+date: ${noteDate}
+Imported At: ${importedAt}
+category: ${category}
+---
+# ${title}\n\n`;
+
+			// Define folder structure
+			const baseFolder = this.settings.defaultFolder || "";
+			const mediaFolder = `${baseFolder}/media`;
+			const categoryFolder = category || "Uncategorized";
+			const folderPath = baseFolder ? `${baseFolder}/${categoryFolder}` : categoryFolder;
+
+			// Sanitize title for note filename (less strict)
+			let safeTitle = title.replace(/[/\\?%*:|"<>]/g, "-").trim();
+			safeTitle = safeTitle.length > 0 ? safeTitle : "Untitled";
+			safeTitle = safeTitle.substring(0, 50);
+			const filename = isVideo ? `[V]${safeTitle}` : safeTitle;
+			const filePath = `${folderPath}/${filename}.md`;
+
+			// Stricter sanitization for media filenames
+			const mediaSafeTitle = this.sanitizeFilename(title);
+
+			// Create folders if they don’t exist
+			if (!await this.app.vault.adapter.exists(folderPath)) {
+				await this.app.vault.createFolder(folderPath);
+			}
+			if (downloadMedia && !await this.app.vault.adapter.exists(mediaFolder)) {
+				await this.app.vault.createFolder(mediaFolder);
+			}
+
+			// Handle video notes
+			if (isVideo) {
+				if (videoUrl) {
+					let finalVideoUrl = videoUrl;
+					if (downloadMedia) {
+						const videoFilename = `${mediaSafeTitle}-${Date.now()}.mp4`;
+						const downloadedFilename = await this.downloadMediaFile(videoUrl, mediaFolder, videoFilename);
+						finalVideoUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+					}
+					markdown += `<video controls src="${finalVideoUrl}" width="100%"></video>\n\n`;
+				} else if (images.length > 0) {
+					let finalImageUrl = images[0];
+					if (downloadMedia) {
+						const imageFilename = `${mediaSafeTitle}-cover-${Date.now()}.jpg`;
+						const downloadedFilename = await this.downloadMediaFile(images[0], mediaFolder, imageFilename);
+						finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+					}
+					markdown += `[![Cover Image](${finalImageUrl})](${url})\n\n`;
+					new Notice("Video URL not found; using cover image as fallback.");
+				}
+				const cleanContent = content.replace(/#\S+/g, "").trim();
+				markdown += `${cleanContent.split("\n").join("\n")}\n\n`;
+
+				const tags = this.extractTags(content);
+				if (tags.length > 0) {
+					markdown += "```\n";
+					markdown += tags.map((tag) => `#${tag}`).join(" ") + "\n";
+					markdown += "```\n";
+				}
+			}
+			// Handle non-video notes
+			else {
+				if (images.length > 0) {
+					let finalImageUrl = images[0];
+					if (downloadMedia) {
+						const imageFilename = `${mediaSafeTitle}-cover-${Date.now()}.jpg`;
+						const downloadedFilename = await this.downloadMediaFile(images[0], mediaFolder, imageFilename);
+						finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+					}
+					markdown += `![Cover Image](${finalImageUrl})\n\n`;
+				}
+				const cleanContent = content.replace(/#[^#\s]*(?:\s+#[^#\s]*)*\s*/g, "").trim();
+				markdown += `${cleanContent.split("\n").join("\n")}\n\n`;
+
+				const tags = this.extractTags(content);
+				if (tags.length > 0) {
+					markdown += "```\n";
+					markdown += tags.map((tag) => `#${tag}`).join(" ") + "\n";
+					markdown += "```\n\n";
+				}
+				if (images.length > 0) {
+					const downloadedImages = [];
+					for (let i = 0; i < images.length; i++) {
+						let finalImageUrl = images[i];
+						if (downloadMedia) {
+							const imageFilename = `${mediaSafeTitle}-${i}-${Date.now()}.jpg`;
+							const downloadedFilename = await this.downloadMediaFile(images[i], mediaFolder, imageFilename);
+							finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+						}
+						downloadedImages.push(`![Image](${finalImageUrl})`);
+					}
+					markdown += downloadedImages.join("\n") + "\n";
+				}
+			}
+
+			// Create and open the note
+			const file = await this.app.vault.create(filePath, markdown);
+			await this.app.workspace.getLeaf(true).openFile(file);
+
+			// Update last used category
+			this.settings.lastCategory = category;
+			await this.saveSettings();
+
+			new Notice(`Imported Xiaohongshu note as ${filePath}`);
+		} catch (error) {
+			console.log(`Failed to import note from ${url}: ${error.message}`);
+			new Notice(`Failed to import note: ${error.message}`);
+		}
+	}
+
+	// Extract note title from HTML
+	extractTitle(html: string): string {
+		const match = html.match(/<title>(.*?)<\/title>/);
+		return match ? match[1].replace(" - 小红书", "") : "Untitled Xiaohongshu Note";
+	}
+
+	// Extract image URLs from note data
+	extractImages(html: string): string[] {
+		const stateMatch = html.match(/window\.__INITIAL_STATE__=(.*?)<\/script>/s);
+		if (!stateMatch) return [];
+
+		try {
+			const jsonStr = stateMatch[1].trim();
+			const cleanedJson = jsonStr.replace(/undefined/g, "null");
+			const state = JSON.parse(cleanedJson);
+			const noteId = Object.keys(state.note.noteDetailMap)[0];
+			const imageList = state.note.noteDetailMap[noteId].note.imageList || [];
+			return imageList
+				.map((img: any) => img.urlDefault || "")
+				.filter((url: string) => url && url.startsWith("http"));
+		} catch (e) {
+			console.log(`Failed to parse images: ${e.message}`);
+			return [];
+		}
+	}
+
+	// Extract video URL from note data
+	extractVideoUrl(html: string): string | null {
+		const stateMatch = html.match(/window\.__INITIAL_STATE__=(.*?)<\/script>/s);
+		if (!stateMatch) return null;
+
+		try {
+			const jsonStr = stateMatch[1].trim();
+			const cleanedJson = jsonStr.replace(/undefined/g, "null");
+			const state = JSON.parse(cleanedJson);
+			const noteId = Object.keys(state.note.noteDetailMap)[0];
+			const noteData = state.note.noteDetailMap[noteId].note;
+			const videoInfo = noteData.video;
+
+			if (!videoInfo || !videoInfo.media || !videoInfo.media.stream) return null;
+
+			if (videoInfo.media.stream.h264 && videoInfo.media.stream.h264.length > 0) {
+				return videoInfo.media.stream.h264[0].masterUrl || null;
+			}
+			if (videoInfo.media.stream.h265 && videoInfo.media.stream.h265.length > 0) {
+				return videoInfo.media.stream.h265[0].masterUrl || null;
+			}
+			return null;
+		} catch (e) {
+			console.log(`Failed to parse video URL: ${e.message}`);
+			return null;
+		}
+	}
+
+	// Extract note content from HTML or JSON
+	extractContent(html: string): string {
+		const divMatch = html.match(/<div id="detail-desc" class="desc">([\s\S]*?)<\/div>/);
+		if (divMatch) {
+			return divMatch[1]
+				.replace(/<[^>]+>/g, "")
+				.replace(/\[话题\]/g, "")
+				.replace(/\[[^\]]+\]/g, "")
+				.trim() || "Content not found";
+		}
+
+		const stateMatch = html.match(/window\.__INITIAL_STATE__=(.*?)<\/script>/s);
+		if (stateMatch) {
+			try {
+				const jsonStr = stateMatch[1].trim();
+				const cleanedJson = jsonStr.replace(/undefined/g, "null");
+				const state = JSON.parse(cleanedJson);
+				const noteId = Object.keys(state.note.noteDetailMap)[0];
+				const desc = state.note.noteDetailMap[noteId].note.desc || "";
+				return desc
+					.replace(/\[话题\]/g, "")
+					.replace(/\[[^\]]+\]/g, "")
+					.trim() || "Content not found";
+			} catch (e) {
+				console.log(`Failed to parse content from JSON: ${e.message}`);
+			}
+		}
+		return "Content not found";
+	}
+
+	// Determine if the note is a video note
+	isVideoNote(html: string): boolean {
+		const stateMatch = html.match(/window\.__INITIAL_STATE__=(.*?)<\/script>/s);
+		if (!stateMatch) return false;
+
+		try {
+			const jsonStr = stateMatch[1].trim();
+			const cleanedJson = jsonStr.replace(/undefined/g, "null");
+			const state = JSON.parse(cleanedJson);
+			const noteId = Object.keys(state.note.noteDetailMap)[0];
+			const noteType = state.note.noteDetailMap[noteId].note.type;
+			return noteType === "video";
+		} catch (e) {
+			console.log(`Failed to determine note type: ${e.message}`);
+			return false;
+		}
+	}
+
+	// Extract tags from content
+	extractTags(content: string): string[] {
+		const tagMatches = content.match(/#\S+/g) || [];
+		return tagMatches.map((tag) => tag.replace("#", "").trim());
+	}
+
+	// Plugin lifecycle: Cleanup on unload (currently empty)
+	onunload() {}
+
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class XHSImporterSettingTab extends PluginSettingTab {
+	plugin: XHSImporterPlugin;
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: XHSImporterPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
-
+		const { containerEl } = this;
 		containerEl.empty();
 
+		containerEl.createEl("h2", { text: "Xiaohongshu Importer Settings" });
+
+		// Default folder setting
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName("Default Folder")
+			.setDesc("Base folder where category subfolders will be created (e.g., 'XHS Notes'). Leave empty for vault root.")
+			.addText((text) =>
+				text
+					.setPlaceholder("XHS Notes")
+					.setValue(this.plugin.settings.defaultFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.defaultFolder = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		// Download media toggle
+		new Setting(containerEl)
+			.setName("Download Media")
+			.setDesc("Default setting: if enabled, images and videos will be downloaded locally to 'XHS Notes/media/'. Can be overridden per import.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.downloadMedia)
+					.onChange(async (value) => {
+						this.plugin.settings.downloadMedia = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		// Category management
+		containerEl.createEl("h3", { text: "Categories" });
+		containerEl.createEl("p", { text: "Add, edit, or remove categories for organizing notes. Use Up/Down to reorder." });
+
+		this.plugin.settings.categories.forEach((category, index) => {
+			const setting = new Setting(containerEl)
+				.setName(`Category ${index + 1}`)
+				.addText((text) =>
+					text
+						.setValue(category)
+						.onChange(async (value) => {
+							this.plugin.settings.categories[index] = value.trim();
+							await this.plugin.saveSettings();
+						})
+				);
+
+			setting.addButton((button) =>
+				button
+					.setIcon("arrow-up")
+					.setTooltip("Move Up")
+					.setDisabled(index === 0)
+					.onClick(async () => {
+						if (index > 0) {
+							[this.plugin.settings.categories[index], this.plugin.settings.categories[index - 1]] =
+								[this.plugin.settings.categories[index - 1], this.plugin.settings.categories[index]];
+							await this.plugin.saveSettings();
+							this.display();
+						}
+					})
+			);
+
+			setting.addButton((button) =>
+				button
+					.setIcon("arrow-down")
+					.setTooltip("Move Down")
+					.setDisabled(index === this.plugin.settings.categories.length - 1)
+					.onClick(async () => {
+						if (index < this.plugin.settings.categories.length - 1) {
+							[this.plugin.settings.categories[index], this.plugin.settings.categories[index + 1]] =
+								[this.plugin.settings.categories[index + 1], this.plugin.settings.categories[index]];
+							await this.plugin.saveSettings();
+							this.display();
+						}
+					})
+			);
+
+			setting.addButton((button) =>
+				button
+					.setButtonText("Remove")
+					.onClick(async () => {
+						this.plugin.settings.categories.splice(index, 1);
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+		});
+
+		new Setting(containerEl)
+			.addButton((button) =>
+				button
+					.setButtonText("Add Category")
+					.onClick(async () => {
+						this.plugin.settings.categories.push("New Category");
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+	}
+}
+
+// Modal for user input during import
+class XHSInputModal extends Modal {
+	result: { text: string | null; category: string; downloadMedia: boolean } | null = null;
+	onSubmit: (result: { text: string | null; category: string; downloadMedia: boolean } | null) => void;
+	settings: XHSImporterSettings;
+	selectedCategory: string;
+	downloadMedia: boolean;
+
+	constructor(app: App, settings: XHSImporterSettings, onSubmit: (result: { text: string | null; category: string; downloadMedia: boolean } | null) => void) {
+		super(app);
+		this.settings = settings;
+		this.onSubmit = onSubmit;
+		this.selectedCategory = this.settings.lastCategory && this.settings.categories.includes(this.settings.lastCategory)
+			? this.settings.lastCategory
+			: this.settings.categories[0];
+		this.downloadMedia = this.settings.downloadMedia;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.style.display = "flex";
+		contentEl.style.flexDirection = "column";
+		contentEl.style.gap = "10px";
+		contentEl.style.padding = "10px";
+
+		contentEl.createEl("h2", { text: "Import Xiaohongshu Note" });
+
+		// Share text input
+		const textRow = contentEl.createEl("div", { cls: "modal-row" });
+		textRow.style.display = "flex";
+		textRow.style.flexDirection = "column";
+		textRow.createEl("p", { text: "Paste the share text below:" });
+		const input = textRow.createEl("textarea", {
+			attr: { placeholder: "e.g., 64 不叫小黄了发布了一篇小红书笔记..." },
+		});
+		input.style.width = "100%";
+		input.style.height = "100px";
+		input.style.margin = "0";
+
+		// Category selection
+		const categoryRow = contentEl.createEl("div", { cls: "modal-row" });
+		categoryRow.style.display = "flex";
+		categoryRow.style.flexDirection = "column";
+		categoryRow.createEl("p", { text: "Select a category:" });
+		const chipContainer = categoryRow.createEl("div");
+		chipContainer.style.display = "flex";
+		chipContainer.style.flexWrap = "wrap";
+		chipContainer.style.gap = "8px";
+
+		this.settings.categories.forEach((category) => {
+			const chip = chipContainer.createEl("button", { text: category });
+			chip.style.padding = "4px 8px";
+			chip.style.borderRadius = "12px";
+			chip.style.border = "1px solid #ccc";
+			chip.style.backgroundColor = category === this.selectedCategory ? "#FF2442" : "#f0f0f0";
+			chip.style.color = category === this.selectedCategory ? "#fff" : "#000";
+			chip.style.cursor = "pointer";
+			chip.style.transition = "background-color 0.2s";
+
+			chip.addEventListener("click", () => {
+				this.selectedCategory = category;
+				chipContainer.querySelectorAll("button").forEach((btn) => {
+					btn.style.backgroundColor = btn.textContent === this.selectedCategory ? "#FF2442" : "#f0f0f0";
+					btn.style.color = btn.textContent === this.selectedCategory ? "#fff" : "#000";
+				});
+			});
+		});
+
+		// Download media option
+		const downloadRow = contentEl.createEl("div", { cls: "modal-row" });
+		downloadRow.style.display = "flex";
+		downloadRow.style.alignItems = "center";
+		downloadRow.style.gap = "8px";
+		const checkbox = downloadRow.createEl("input", { attr: { type: "checkbox" } });
+		checkbox.checked = this.downloadMedia;
+		checkbox.addEventListener("change", () => {
+			this.downloadMedia = checkbox.checked;
+		});
+		downloadRow.createEl("label", { text: "Download media locally for this import" });
+
+		// Submit button
+		const buttonRow = contentEl.createEl("div", { cls: "modal-row" });
+		buttonRow.style.display = "flex";
+		buttonRow.style.justifyContent = "flex-end";
+		const submitButton = buttonRow.createEl("button", { text: "Import" });
+		submitButton.style.margin = "0";
+
+		submitButton.addEventListener("click", () => {
+			this.result = { text: input.value.trim(), category: this.selectedCategory, downloadMedia: this.downloadMedia };
+			this.close();
+		});
+
+		input.addEventListener("keypress", (e) => {
+			if (e.key === "Enter" && !e.shiftKey) {
+				e.preventDefault();
+				this.result = { text: input.value.trim(), category: this.selectedCategory, downloadMedia: this.downloadMedia };
+				this.close();
+			}
+		});
+	}
+
+	onClose() {
+		this.onSubmit(this.result);
 	}
 }

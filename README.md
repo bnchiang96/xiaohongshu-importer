@@ -1,94 +1,125 @@
-# Obsidian Sample Plugin
+# Xiaohongshu Importer for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Import notes from Xiaohongshu (小红书) into your Obsidian vault with ease. This plugin extracts titles, content, images, videos, and tags from Xiaohongshu share links, organizing them into neatly formatted Markdown files.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Import Notes**: Paste a Xiaohongshu share link (e.g., `http://xhslink.com/a/...`) to import its content.
+- **Media Handling**:
+	- Option to download images and videos locally to a `media` subfolder (e.g., `XHS Notes/media/`).
+	- Uses relative paths (`../media/`) for local media or online URLs if downloading is disabled.
+- **Video Support**: Embeds videos with `<video>` tags for video notes, falling back to a cover image if the video URL is unavailable.
+- **Content Extraction**: Pulls titles, descriptions, and tags from notes, cleaning up hashtags and formatting them in a code block.
+- **Categorization**: Assign notes to user-defined categories via a chip-based selection UI in the import modal.
+- **Flexible Storage**:
+	- Configurable base folder (default: `XHS Notes`).
+	- Notes are saved in category subfolders (e.g., `XHS Notes/搞笑/[V]Note-Title.md` for video notes).
+- **Settings**:
+	- Set a default folder for imports.
+	- Toggle default media download behavior (overridable per import).
+	- Manage a list of categories with add/edit/remove and reorder functionality.
+- **Frontmatter**: Adds metadata (title, source URL, date, imported timestamp, category) to each note.
 
-## First time developing plugins?
+## Installation
 
-Quick starting guide for new plugin devs:
+### Manual Installation
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. **Clone or Download**:
+	- Clone this repository or download the ZIP file:
+	  ```
+	  git clone https://github.com/yourusername/xhs-importer.git
+	  ```
+	- Or download from the releases page (once published).
+2. **Copy Files**:
+	- Copy `main.js`, `manifest.json`, and (optionally) `styles.css` to your vault’s plugin folder:
+	  ```
+	  cp main.js manifest.json /path/to/your-vault/.obsidian/plugins/xhs-importer/
+	  ```
+	- If the `xhs-importer` folder doesn’t exist, create it first:
+	  ```
+	  mkdir /path/to/your-vault/.obsidian/plugins/xhs-importer
+	  ```
+3. **Enable Plugin**:
+	- Open Obsidian, go to `Settings > Community Plugins`.
+	- Ensure "Safe Mode" is off.
+	- Find "Xiaohongshu Importer" in the list and toggle it on.
 
-## Releasing new releases
+### Development Setup (Optional)
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+For those who want to modify or build the plugin:
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+1. **Install Dependencies**:
+	- Ensure Node.js and Yarn are installed.
+	- Run:
+	  ```
+	  yarn install
+	  ```
+2. **Build**:
+	- Compile the TypeScript code:
+	  ```
+	  yarn dev
+	  ```
+	- Copy the output (`main.js`) and `manifest.json` to your plugin folder as above.
+3. **Hot Reload** (Optional):
+	- Install the [Obsidian Hot Reload plugin](https://github.com/pjeby/hot-reload).
+	- Use `yarn dev` to watch for changes and auto-reload in Obsidian.
 
-## Adding your plugin to the community plugin list
+## Usage
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. **Trigger Import**:
+	- Click the ribbon icon (book) on the left sidebar, or use the command `Import Xiaohongshu Note` via the Command Palette (Ctrl/Cmd + P).
+2. **Enter Share Text**:
+	- Paste the Xiaohongshu share text containing the URL (e.g., "64 不叫小黄了发布了一篇小红书笔记，快来看看吧！http://xhslink.com/a/...").
+3. **Select Options**:
+	- Choose a category from the list.
+	- Check "Download media locally for this import" to override the default setting.
+4. **Import**:
+	- Click "Import" or press Enter to process the note.
+	- The note will be created and opened in a new tab.
 
-## How to use
+## Configuration
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- Open `Settings > Community Plugins > Xiaohongshu Importer`:
+	- **Default Folder**: Set where notes and media are saved (e.g., `XHS Notes`).
+	- **Download Media**: Toggle default behavior for downloading media (overridable per import).
+	- **Categories**: Add, edit, remove, or reorder categories for organizing notes.
 
-## Manually installing the plugin
+## Example Output
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+For a note with title `柔佛人狂喜！新山终于有“地铁”了？`:
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+- **File**: `XHS Notes/搞笑/柔佛人狂喜！新山终于有“地铁”了？.md`
+- **Content**:
+  ```
+  ---
+  title: 柔佛人狂喜！新山终于有“地铁”了？
+  source: http://xhslink.com/a/...
+  date: 2025-03-09
+  Imported At: 3/9/2025, 2:35:22 PM
+  category: 搞笑
+  ---
+  # 柔佛人狂喜！新山终于有“地铁”了？
 
-## Funding URL
+  ![Cover Image](../media/柔佛人狂喜-新山终于有地铁了-cover-1741570701965.jpg)
 
-You can include funding URLs where people who use your plugin can financially support it.
+  [Note content here]
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+  ```
+  #tags here
+  ```
+- **Media**: `XHS Notes/media/柔佛人狂喜-新山终于有地铁了-cover-1741570701965.jpg`
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+## Contributing
 
-If you have multiple URLs, you can also do:
+Feel free to submit issues or pull requests on GitHub. To build locally:
+- Clone the repo.
+- Run `yarn install` and `yarn dev`.
+- Test in your Obsidian vault.
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+## License
 
-## API Documentation
+MIT License - see [LICENSE](LICENSE) for details.
 
-See https://github.com/obsidianmd/obsidian-api
+## Acknowledgements
+
+Built with ❤️ for the Obsidian community, powered by [xAI's Grok](https://xai.com).
