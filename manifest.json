@@ -1,9 +1,9 @@
 {
-	"id": "Xiaohongshu-Importer-for-Obsidian",
+	"id": "xiaohongshu-importer",
 	"name": "Xiaohongshu Importer",
 	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Import Xiaohongshu notes into Obsidian with media and categorization.",
+	"description": "Import Xiaohongshu (小红书) notes with media and categorization.",
 	"author": "bnchiang96",
 	"authorUrl": "https://github.com/bnchiang96",
 	"isDesktopOnly": false
