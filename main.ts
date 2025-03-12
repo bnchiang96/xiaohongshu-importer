@@ -1,15 +1,15 @@
-import { Plugin, Notice, Modal, requestUrl, PluginSettingTab, App, Setting, WorkspaceLeaf } from "obsidian";
+import { Plugin, Notice, Modal, requestUrl, PluginSettingTab, App, Setting, WorkspaceLeaf, TFile } from "obsidian";
 
 interface XHSImporterSettings {
 	defaultFolder: string;
-	categories: string[];
+	categories: string[]; // User-defined categories, excluding "其他"
 	lastCategory: string;
 	downloadMedia: boolean;
 }
 
 const DEFAULT_SETTINGS: XHSImporterSettings = {
 	defaultFolder: "XHS Notes",
-	categories: ["美食", "旅行", "娱乐", "知识", "工作", "情感", "个人成长", "优惠", "搞笑", "育儿", "Others"],
+	categories: ["美食", "旅行", "娱乐", "知识", "工作", "情感", "个人成长", "优惠", "搞笑", "育儿"], // Removed "Others"
 	lastCategory: "",
 	downloadMedia: false,
 };
@@ -167,7 +167,7 @@ category: ${category}
 				} else if (images.length > 0) {
 					let finalImageUrl = images[0];
 					if (downloadMedia) {
-						const imageFilename = `${mediaSafeTitle}-cover-${Date.now()}.jpg`;
+						const imageFilename = `${mediaSafeTitle}-0-${Date.now()}.jpg`; // Use index 0 to match later logic
 						const downloadedFilename = await this.downloadMediaFile(images[0], mediaFolder, imageFilename);
 						finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
 					}
@@ -186,15 +186,24 @@ category: ${category}
 			}
 			// Handle non-video notes
 			else {
+				let downloadedImages: string[] = [];
 				if (images.length > 0) {
-					let finalImageUrl = images[0];
 					if (downloadMedia) {
-						const imageFilename = `${mediaSafeTitle}-cover-${Date.now()}.jpg`;
-						const downloadedFilename = await this.downloadMediaFile(images[0], mediaFolder, imageFilename);
-						finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+						// Download all images, including the first one (which will be used as the cover)
+						for (let i = 0; i < images.length; i++) {
+							const imageFilename = `${mediaSafeTitle}-${i}-${Date.now()}.jpg`;
+							const downloadedFilename = await this.downloadMediaFile(images[i], mediaFolder, imageFilename);
+							const finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
+							downloadedImages.push(finalImageUrl);
+						}
+					} else {
+						downloadedImages = images;
 					}
-					markdown += `![Cover Image](${finalImageUrl})\n\n`;
+
+					// Use the first downloaded image as the cover image (no separate download for cover)
+					markdown += `![Cover Image](${downloadedImages[0]})\n\n`;
 				}
+
 				const cleanContent = content.replace(/#[^#\s]*(?:\s+#[^#\s]*)*\s*/g, "").trim();
 				markdown += `${cleanContent.split("\n").join("\n")}\n\n`;
 
@@ -204,18 +213,11 @@ category: ${category}
 					markdown += tags.map((tag) => `#${tag}`).join(" ") + "\n";
 					markdown += "```\n\n";
 				}
+
 				if (images.length > 0) {
-					const downloadedImages = [];
-					for (let i = 0; i < images.length; i++) {
-						let finalImageUrl = images[i];
-						if (downloadMedia) {
-							const imageFilename = `${mediaSafeTitle}-${i}-${Date.now()}.jpg`;
-							const downloadedFilename = await this.downloadMediaFile(images[i], mediaFolder, imageFilename);
-							finalImageUrl = downloadedFilename.startsWith("http") ? downloadedFilename : `../media/${downloadedFilename}`;
-						}
-						downloadedImages.push(`![Image](${finalImageUrl})`);
-					}
-					markdown += downloadedImages.join("\n") + "\n";
+					// Add all images (including the first one, which is already used as the cover)
+					const imageMarkdown = downloadedImages.map((url) => `![Image](${url})`).join("\n");
+					markdown += `${imageMarkdown}\n`;
 				}
 			}
 
@@ -344,7 +346,6 @@ category: ${category}
 
 	// Plugin lifecycle: Cleanup on unload (currently empty)
 	onunload() {}
-
 }
 
 class XHSImporterSettingTab extends PluginSettingTab {
@@ -472,7 +473,7 @@ class XHSInputModal extends Modal {
 		this.onSubmit = onSubmit;
 		this.selectedCategory = this.settings.lastCategory && this.settings.categories.includes(this.settings.lastCategory)
 			? this.settings.lastCategory
-			: this.settings.categories[0];
+			: this.settings.categories[0] || "其他";
 		this.downloadMedia = this.settings.downloadMedia;
 	}
 
@@ -507,6 +508,7 @@ class XHSInputModal extends Modal {
 		chipContainer.style.flexWrap = "wrap";
 		chipContainer.style.gap = "8px";
 
+		// Add user-defined categories
 		this.settings.categories.forEach((category) => {
 			const chip = chipContainer.createEl("button", { text: category });
 			chip.style.padding = "4px 8px";
@@ -526,23 +528,49 @@ class XHSInputModal extends Modal {
 			});
 		});
 
+		// Add hardcoded "其他" category
+		const otherChip = chipContainer.createEl("button", { text: "其他" });
+		otherChip.style.padding = "4px 8px";
+		otherChip.style.borderRadius = "12px";
+		otherChip.style.border = "1px solid #ccc";
+		otherChip.style.backgroundColor = "其他" === this.selectedCategory ? "#FF2442" : "#f0f0f0";
+		otherChip.style.color = "其他" === this.selectedCategory ? "#fff" : "#000";
+		otherChip.style.cursor = "pointer";
+		otherChip.style.transition = "background-color 0.2s";
+
+		otherChip.addEventListener("click", () => {
+			this.selectedCategory = "其他";
+			chipContainer.querySelectorAll("button").forEach((btn) => {
+				btn.style.backgroundColor = btn.textContent === this.selectedCategory ? "#FF2442" : "#f0f0f0";
+				btn.style.color = btn.textContent === this.selectedCategory ? "#fff" : "#000";
+			});
+		});
+
 		// Download media option
 		const downloadRow = contentEl.createEl("div", { cls: "modal-row" });
 		downloadRow.style.display = "flex";
 		downloadRow.style.alignItems = "center";
 		downloadRow.style.gap = "8px";
-		const checkbox = downloadRow.createEl("input", { attr: { type: "checkbox" } });
+		downloadRow.style.marginTop = "20px"; // Existing margin-top
+		downloadRow.style.marginBottom = "20px"; // Added margin-bottom to match margin-top
+		const checkboxId = "download-media-checkbox";
+		const checkbox = downloadRow.createEl("input", { attr: { type: "checkbox", id: checkboxId } });
 		checkbox.checked = this.downloadMedia;
 		checkbox.addEventListener("change", () => {
 			this.downloadMedia = checkbox.checked;
 		});
-		downloadRow.createEl("label", { text: "Download media locally for this import" });
+		const label = downloadRow.createEl("label", {
+			text: "Download media locally for this import",
+			attr: { for: checkboxId } // Associate label with checkbox
+		});
+		label.style.cursor = "pointer"; // Ensure the label looks clickable
 
 		// Submit button
 		const buttonRow = contentEl.createEl("div", { cls: "modal-row" });
 		buttonRow.style.display = "flex";
 		buttonRow.style.justifyContent = "flex-end";
 		const submitButton = buttonRow.createEl("button", { text: "Import" });
+		submitButton.style.width = "100%"; // Make the button full width
 		submitButton.style.margin = "0";
 
 		submitButton.addEventListener("click", () => {
