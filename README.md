@@ -14,10 +14,10 @@ Import notes from Xiaohongshu (小红书) into your Obsidian vault with ease. Th
 
 ### Option 1: Download from GitHub Release
 1. Visit the [latest release](https://github.com/bnchiang96/Xiaohongshu-Importer-for-Obsidian/releases/latest) on GitHub.
-2. Download the `xhs-importer.zip` file, which contains `main.js` and `manifest.json`.
+2. Download the `Xiaohongshu-Importer-for-Obsidian-v1.0.1.zip` file, which contains `main.js` and `manifest.json`.
 3. Extract the ZIP file to your Obsidian plugins folder:
    ```
-   unzip Xiaohongshu-Importer-for-Obsidian-v1.0.0.zip -d /path/to/your-vault/.obsidian/plugins/Xiaohongshu-Importer-for-Obsidian/
+   unzip Xiaohongshu-Importer-for-Obsidian-v1.0.1.zip -d /path/to/your-vault/.obsidian/plugins/Xiaohongshu-Importer-for-Obsidian/
    ```
 	- Ensure the folder name matches the plugin ID: `Xiaohongshu-Importer-for-Obsidian`.
 4. Enable the plugin in Obsidian:

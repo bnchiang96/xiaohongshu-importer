@@ -1,6 +1,6 @@
 {
 	"name": "Xiaohongshu-Importer-for-Obsidian",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "An Obsidian plugin to import Xiaohongshu (小红书) notes into your vault.",
 	"main": "main.js",
 	"scripts": {
@@ -8,7 +8,7 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
 	},
 	"keywords": ["obsidian", "plugin", "xiaohongshu"],
-	"author": "Your Name",
+	"author": "bnchiang96",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
