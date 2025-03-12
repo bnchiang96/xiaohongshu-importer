@@ -1,23 +1,18 @@
 {
-	"name": "Xiaohongshu-Importer-for-Obsidian",
+	"name": "xiaohongshu-importer",
 	"version": "1.0.1",
-	"description": "An Obsidian plugin to import Xiaohongshu (小红书) notes into your vault.",
+	"description": "Import Xiaohongshu (小红书) notes with media and categorization.",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc"
 	},
-	"keywords": ["obsidian", "plugin", "xiaohongshu"],
+	"keywords": [],
 	"author": "bnchiang96",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "5.29.0",
-		"@typescript-eslint/parser": "5.29.0",
-		"builtin-modules": "3.3.0",
-		"esbuild": "0.17.3",
-		"obsidian": "latest",
-		"tslib": "2.4.0",
-		"typescript": "4.7.4"
+		"obsidian": "^1.0.0",
+		"tslib": "^2.3.1",
+		"typescript": "^4.4.4"
 	}
 }
