@@ -479,99 +479,86 @@ class XHSInputModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.style.display = "flex";
-		contentEl.style.flexDirection = "column";
-		contentEl.style.gap = "10px";
-		contentEl.style.padding = "10px";
+		// Apply CSS class to modal content
+		contentEl.addClass("xhs-modal-content");
 
 		contentEl.createEl("h2", { text: "Import Xiaohongshu Note" });
 
 		// Share text input
-		const textRow = contentEl.createEl("div", { cls: "modal-row" });
-		textRow.style.display = "flex";
-		textRow.style.flexDirection = "column";
+		const textRow = contentEl.createEl("div", { cls: "xhs-modal-row" });
 		textRow.createEl("p", { text: "Paste the share text below:" });
 		const input = textRow.createEl("textarea", {
+			cls: "xhs-modal-textarea",
 			attr: { placeholder: "e.g., 64 不叫小黄了发布了一篇小红书笔记..." },
 		});
-		input.style.width = "100%";
-		input.style.height = "100px";
-		input.style.margin = "0";
 
 		// Category selection
-		const categoryRow = contentEl.createEl("div", { cls: "modal-row" });
-		categoryRow.style.display = "flex";
-		categoryRow.style.flexDirection = "column";
+		const categoryRow = contentEl.createEl("div", { cls: "xhs-modal-row" });
 		categoryRow.createEl("p", { text: "Select a category:" });
-		const chipContainer = categoryRow.createEl("div");
-		chipContainer.style.display = "flex";
-		chipContainer.style.flexWrap = "wrap";
-		chipContainer.style.gap = "8px";
+		const chipContainer = categoryRow.createEl("div", { cls: "xhs-chip-container" });
+
+		// Helper function to update chip styles
+		const updateChipStyles = () => {
+			chipContainer.querySelectorAll("button").forEach((btn) => {
+				if (btn.textContent === this.selectedCategory) {
+					btn.classList.add("xhs-chip--selected");
+				} else {
+					btn.classList.remove("xhs-chip--selected");
+				}
+			});
+		};
 
 		// Add user-defined categories
 		this.settings.categories.forEach((category) => {
-			const chip = chipContainer.createEl("button", { text: category });
-			chip.style.padding = "4px 8px";
-			chip.style.borderRadius = "12px";
-			chip.style.border = "1px solid #ccc";
-			chip.style.backgroundColor = category === this.selectedCategory ? "#FF2442" : "#f0f0f0";
-			chip.style.color = category === this.selectedCategory ? "#fff" : "#000";
-			chip.style.cursor = "pointer";
-			chip.style.transition = "background-color 0.2s";
+			const chip = chipContainer.createEl("button", {
+				text: category,
+				cls: "xhs-chip",
+			});
+			if (category === this.selectedCategory) {
+				chip.classList.add("xhs-chip--selected");
+			}
 
 			chip.addEventListener("click", () => {
 				this.selectedCategory = category;
-				chipContainer.querySelectorAll("button").forEach((btn) => {
-					btn.style.backgroundColor = btn.textContent === this.selectedCategory ? "#FF2442" : "#f0f0f0";
-					btn.style.color = btn.textContent === this.selectedCategory ? "#fff" : "#000";
-				});
+				updateChipStyles();
 			});
 		});
 
 		// Add hardcoded "其他" category
-		const otherChip = chipContainer.createEl("button", { text: "其他" });
-		otherChip.style.padding = "4px 8px";
-		otherChip.style.borderRadius = "12px";
-		otherChip.style.border = "1px solid #ccc";
-		otherChip.style.backgroundColor = "其他" === this.selectedCategory ? "#FF2442" : "#f0f0f0";
-		otherChip.style.color = "其他" === this.selectedCategory ? "#fff" : "#000";
-		otherChip.style.cursor = "pointer";
-		otherChip.style.transition = "background-color 0.2s";
+		const otherChip = chipContainer.createEl("button", {
+			text: "其他",
+			cls: "xhs-chip",
+		});
+		if ("其他" === this.selectedCategory) {
+			otherChip.classList.add("xhs-chip--selected");
+		}
 
 		otherChip.addEventListener("click", () => {
 			this.selectedCategory = "其他";
-			chipContainer.querySelectorAll("button").forEach((btn) => {
-				btn.style.backgroundColor = btn.textContent === this.selectedCategory ? "#FF2442" : "#f0f0f0";
-				btn.style.color = btn.textContent === this.selectedCategory ? "#fff" : "#000";
-			});
+			updateChipStyles();
 		});
 
 		// Download media option
-		const downloadRow = contentEl.createEl("div", { cls: "modal-row" });
-		downloadRow.style.display = "flex";
-		downloadRow.style.alignItems = "center";
-		downloadRow.style.gap = "8px";
-		downloadRow.style.marginTop = "20px"; // Existing margin-top
-		downloadRow.style.marginBottom = "20px"; // Added margin-bottom to match margin-top
+		const downloadRow = contentEl.createEl("div", { cls: ["xhs-modal-row", "xhs-download-row"] });
+		const downloadWrapper = downloadRow.createEl("div", { cls: "xhs-download-wrapper" });
 		const checkboxId = "download-media-checkbox";
-		const checkbox = downloadRow.createEl("input", { attr: { type: "checkbox", id: checkboxId } });
+		const checkbox = downloadWrapper.createEl("input", { attr: { type: "checkbox", id: checkboxId } });
 		checkbox.checked = this.downloadMedia;
 		checkbox.addEventListener("change", () => {
 			this.downloadMedia = checkbox.checked;
 		});
-		const label = downloadRow.createEl("label", {
+		const label = downloadWrapper.createEl("label", {
 			text: "Download media locally for this import",
-			attr: { for: checkboxId } // Associate label with checkbox
+			cls: "xhs-download-label",
+			attr: { for: checkboxId },
 		});
-		label.style.cursor = "pointer"; // Ensure the label looks clickable
 
 		// Submit button
-		const buttonRow = contentEl.createEl("div", { cls: "modal-row" });
-		buttonRow.style.display = "flex";
-		buttonRow.style.justifyContent = "flex-end";
-		const submitButton = buttonRow.createEl("button", { text: "Import" });
-		submitButton.style.width = "100%"; // Make the button full width
-		submitButton.style.margin = "0";
+		const buttonRow = contentEl.createEl("div", { cls: ["xhs-modal-row", "xhs-button-row"] });
+		const submitButton = buttonRow.createEl("button", {
+			text: "Import",
+			cls: "xhs-submit-button",
+		});
 
 		submitButton.addEventListener("click", () => {
 			this.result = { text: input.value.trim(), category: this.selectedCategory, downloadMedia: this.downloadMedia };
