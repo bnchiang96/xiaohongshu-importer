@@ -1,18 +1,17 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from "builtin-modules";
+import { builtinModules } from "module";
 
-const banner =
-`/*
+const banner = `/*
  * Xiaohongshu Importer plugin
  * Author: bnchiang96
- * Version: 1.1.0
+ * Version: 1.1.1
  */
 `;
 
-const prod = (process.argv[2] === "production");
+const prod = process.argv[2] === "production";
 
-const context = await esbuild.context({
+esbuild.build({
 	banner: {
 		js: banner,
 	},
@@ -21,30 +20,14 @@ const context = await esbuild.context({
 	external: [
 		"obsidian",
 		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtins],
+		...builtinModules,
+	],
 	format: "cjs",
-	target: "es2018",
-	logLevel: "info",
-	sourcemap: prod ? false : "inline",
-	treeShaking: true,
+	target: "es2020",
+	platform: "node",
 	outfile: "main.js",
+	sourcemap: !prod,
 	minify: prod,
-});
-
-if (prod) {
-	await context.rebuild();
-	process.exit(0);
-} else {
-	await context.watch();
-}
+	watch: !prod,
+	treeShaking: true,
+}).catch(() => process.exit(1));

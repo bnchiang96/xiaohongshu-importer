@@ -22,7 +22,7 @@ export default class XHSImporterPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Add ribbon icon to trigger note import
-		this.addRibbonIcon("book", "Import Xiaohongshu Note", async () => {
+		this.addRibbonIcon("book", "Import Xiaohongshu note", async () => {
 			const input = await this.promptForShareText();
 			if (input && input.text) {
 				const url = this.extractURL(input.text);
@@ -36,8 +36,8 @@ export default class XHSImporterPlugin extends Plugin {
 
 		// Add command for importing notes via command palette
 		this.addCommand({
-			id: "Xiaohongshu-Importer-for-Obsidian",
-			name: "Import Xiaohongshu Note",
+			id: "import",
+			name: "Import Xiaohongshu note",
 			callback: async () => {
 				const input = await this.promptForShareText();
 				if (input && input.text) {
@@ -360,11 +360,9 @@ class XHSImporterSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", { text: "Xiaohongshu Importer Settings" });
-
 		// Default folder setting
 		new Setting(containerEl)
-			.setName("Default Folder")
+			.setName("Default folder")
 			.setDesc("Base folder where category subfolders will be created (e.g., 'XHS Notes'). Leave empty for vault root.")
 			.addText((text) =>
 				text
@@ -378,7 +376,7 @@ class XHSImporterSettingTab extends PluginSettingTab {
 
 		// Download media toggle
 		new Setting(containerEl)
-			.setName("Download Media")
+			.setName("Download media")
 			.setDesc("Default setting: if enabled, images and videos will be downloaded locally to 'XHS Notes/media/'. Can be overridden per import.")
 			.addToggle((toggle) =>
 				toggle
@@ -390,7 +388,10 @@ class XHSImporterSettingTab extends PluginSettingTab {
 			);
 
 		// Category management
-		containerEl.createEl("h3", { text: "Categories" });
+		new Setting(containerEl)
+			.setName("Categories")
+			.setHeading();
+
 		containerEl.createEl("p", { text: "Add, edit, or remove categories for organizing notes. Use Up/Down to reorder." });
 
 		this.plugin.settings.categories.forEach((category, index) => {
@@ -408,7 +409,7 @@ class XHSImporterSettingTab extends PluginSettingTab {
 			setting.addButton((button) =>
 				button
 					.setIcon("arrow-up")
-					.setTooltip("Move Up")
+					.setTooltip("Move up")
 					.setDisabled(index === 0)
 					.onClick(async () => {
 						if (index > 0) {
@@ -423,7 +424,7 @@ class XHSImporterSettingTab extends PluginSettingTab {
 			setting.addButton((button) =>
 				button
 					.setIcon("arrow-down")
-					.setTooltip("Move Down")
+					.setTooltip("Move down")
 					.setDisabled(index === this.plugin.settings.categories.length - 1)
 					.onClick(async () => {
 						if (index < this.plugin.settings.categories.length - 1) {
@@ -449,7 +450,7 @@ class XHSImporterSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.addButton((button) =>
 				button
-					.setButtonText("Add Category")
+					.setButtonText("Add category")
 					.onClick(async () => {
 						this.plugin.settings.categories.push("New Category");
 						await this.plugin.saveSettings();
@@ -482,7 +483,7 @@ class XHSInputModal extends Modal {
 		// Apply CSS class to modal content
 		contentEl.addClass("xhs-modal-content");
 
-		contentEl.createEl("h2", { text: "Import Xiaohongshu Note" });
+		contentEl.createEl("h2", { text: "Import Xiaohongshu note" });
 
 		// Share text input
 		const textRow = contentEl.createEl("div", { cls: "xhs-modal-row" });

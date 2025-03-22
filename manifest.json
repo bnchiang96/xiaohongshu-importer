@@ -1,7 +1,7 @@
 {
 	"id": "xiaohongshu-importer",
 	"name": "Xiaohongshu Importer",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Import Xiaohongshu (小红书) notes with media and categorization.",
 	"author": "bnchiang96",
