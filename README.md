@@ -10,7 +10,7 @@ A plugin to import Xiaohongshu (小红书) notes into your workspace with option
 - Full-width "Import" button and improved modal layout.
 
 ## Installation
-1. Download the latest release: [Xiaohongshu-Importer-v1.1.0.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.0/Xiaohongshu-Importer-v1.1.0.zip)
+1. Download the latest release: [Xiaohongshu-Importer-v1.1.1.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.1/Xiaohongshu-Importer-v1.1.1.zip)
 2. In your workspace, go to **Settings > Community Plugins > Install from ZIP**.
 3. Select the downloaded ZIP file and install it.
 4. Enable the plugin in **Settings > Community Plugins**.
