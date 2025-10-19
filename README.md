@@ -1,6 +1,6 @@
 # Xiaohongshu Importer for Obsidian
 
-**Version**: 1.1.1  
+**Version**: 1.1.2  
 **Author**: bnchiang96  
 **Repository**: [https://github.com/bnchiang96/xiaohongshu-importer](https://github.com/bnchiang96/xiaohongshu-importer)  
 **License**: MIT
@@ -39,11 +39,11 @@ The Xiaohongshu Importer plugin is now available in the Obsidian Community Plugi
 
 If you prefer to install the plugin manually or need a specific version, you can download the release files and install them directly.
 
-1. Download the latest release ZIP file from the GitHub releases page: [Xiaohongshu-Importer-v1.1.1.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.1/Xiaohongshu-Importer-v1.1.1.zip).
+1. Download the latest release ZIP file from the GitHub releases page: [Xiaohongshu-Importer-v1.1.2.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.2/Xiaohongshu-Importer-v1.1.2.zip).
 2. Extract the ZIP file to obtain `main.js`, `manifest.json`, and `styles.css`.
 3. Copy these files to your Obsidian vault’s plugins directory:
-	- On desktop: `<vault>/.obsidian/plugins/xiaohongshu-importer/`
-	- On mobile: You may need to use a file manager to copy the files to the same directory.
+   - On desktop: `<vault>/.obsidian/plugins/xiaohongshu-importer/`
+   - On mobile: You may need to use a file manager to copy the files to the same directory.
 4. Open Obsidian and go to **Settings > Community Plugins**.
 5. Ensure community plugins are enabled.
 6. Under **Installed Plugins**, find **Xiaohongshu Importer** and click the toggle to enable it.
@@ -54,37 +54,37 @@ If you prefer to install the plugin manually or need a specific version, you can
 ### Importing a Xiaohongshu Note
 
 1. **Trigger the Import**:
-	- Click the Xiaohongshu Importer ribbon icon (a book icon) on the left sidebar, or
-	- Use the command palette: Press `Ctrl/Cmd + P`, type "Import Xiaohongshu note", and select the command.
+   - Click the Xiaohongshu Importer ribbon icon (a book icon) on the left sidebar, or
+   - Use the command palette: Press `Ctrl/Cmd + P`, type "Import Xiaohongshu note", and select the command.
 2. **Enter Share Text**:
-	- A modal will appear. Paste the Xiaohongshu share text or URL (e.g., "64 不叫小黄了发布了一篇小红书笔记... http://xhslink.com/a/...").
+   - A modal will appear. Paste the Xiaohongshu share text or URL (e.g., "64 不叫小黄了发布了一篇小红书笔记... http://xhslink.com/a/...").
 3. **Select a Category**:
-	- Choose a category for the note (e.g., "Travel", "Food") or select "Others" (其他).
+   - Choose a category for the note (e.g., "Travel", "Food") or select "Others" (其他).
 4. **Choose Media Download Option**:
-	- Check the "Download media locally for this import" box if you want to download images and videos to your vault. Leave it unchecked to embed media using their original URLs.
+   - Check the "Download media locally for this import" box if you want to download images and videos to your vault. Leave it unchecked to embed media using their original URLs.
 5. **Import the Note**:
-	- Click **Import** or press `Enter` (without Shift) to start the import process.
+   - Click **Import** or press `Enter` (without Shift) to start the import process.
 6. **View the Note**:
-	- The plugin will create a Markdown file in your vault (e.g., `XHS Notes/Travel/NoteTitle.md`) and open it automatically.
-	- A notice will confirm the import: "Imported Xiaohongshu note as XHS Notes/Travel/NoteTitle.md".
+   - The plugin will create a Markdown file in your vault (e.g., `XHS Notes/Travel/NoteTitle.md`) and open it automatically.
+   - A notice will confirm the import: "Imported Xiaohongshu note as XHS Notes/Travel/NoteTitle.md".
 
 ### Configuring the Plugin
 
 1. Go to **Settings > Community Plugins > Xiaohongshu Importer**.
 2. **Default Folder**:
-	- Set the base folder where notes will be saved (e.g., `XHS Notes`). Leave empty to save notes at the vault root.
+   - Set the base folder where notes will be saved (e.g., `XHS Notes`). Leave empty to save notes at the vault root.
 3. **Download Media**:
-	- Toggle this option to enable or disable media download by default. You can override this per import in the modal.
+   - Toggle this option to enable or disable media download by default. You can override this per import in the modal.
 4. **Categories**:
-	- Add, edit, remove, or reorder categories for organizing your notes. Default categories include "美食" (Food), "旅行" (Travel), etc.
-	- Use the "Add category" button to create new categories, and the up/down arrows to reorder them.
+   - Add, edit, remove, or reorder categories for organizing your notes. Default categories include "美食" (Food), "旅行" (Travel), etc.
+   - Use the "Add category" button to create new categories, and the up/down arrows to reorder them.
 
 ## File Structure
 
 - Notes are saved in the format: `<defaultFolder>/<category>/<noteTitle>.md`.
-	- Example: `XHS Notes/Travel/My Trip to Bali.md`
+  - Example: `XHS Notes/Travel/My Trip to Bali.md`
 - Media files (if downloaded) are saved in: `<defaultFolder>/media/`.
-	- Example: `XHS Notes/media/My-Trip-to-Бали-123456789.jpg`
+  - Example: `XHS Notes/media/My-Trip-to-Бали-123456789.jpg`
 - Each note includes frontmatter with metadata:
   ```yaml
   ---
@@ -99,7 +99,7 @@ If you prefer to install the plugin manually or need a specific version, you can
 ## Troubleshooting
 
 - **"No valid Xiaohongshu URL found in the text"**:
-	- Ensure you’ve pasted a valid Xiaohongshu share link or text containing a URL (e.g., `http://xhslink.com/a/...`).
+	- Ensure you’ve pasted a valid Xiaohongshu share link or text containing a URL (e.g., `http://xhslink.com/a/...` or the new format).
 - **"Failed to import note"**:
 	- Check your internet connection and ensure the URL is accessible.
 	- Verify that the note is public and not restricted.
@@ -158,14 +158,14 @@ This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file f
 
 ## Acknowledgments
 
-- Thanks to the Obsidian community for their support and feedback during the plugin’s development.
+- Thanks to the Obsidian community for their support and feedback during the plugin’s development, including the community PR fixing the XHS URL bug.
 - Built with the Obsidian API and inspired by the community’s plugin guidelines.
 
 ---
 
 # 小红书导入器 for Obsidian <a id="chinese-readme"></a>
 
-**版本**：1.1.1  
+**版本**：1.1.2  
 **作者**：bnchiang96  
 **代码仓库**：[https://github.com/bnchiang96/xiaohongshu-importer](https://github.com/bnchiang96/xiaohongshu-importer)  
 **许可证**：MIT
@@ -202,7 +202,7 @@ This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file f
 
 如果您更喜欢手动安装插件或需要特定版本，可以直接下载发布文件并安装。
 
-1. 从 GitHub 发布页面下载最新的发布 ZIP 文件：[Xiaohongshu-Importer-v1.1.1.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.1/Xiaohongshu-Importer-v1.1.1.zip)。
+1. 从 GitHub 发布页面下载最新的发布 ZIP 文件：[Xiaohongshu-Importer-v1.1.2.zip](https://github.com/bnchiang96/xiaohongshu-importer/releases/download/1.1.2/Xiaohongshu-Importer-v1.1.2.zip)。
 2. 解压 ZIP 文件，获取 `main.js`、`manifest.json` 和 `styles.css`。
 3. 将这些文件复制到您的 Obsidian 知识库的插件目录：
 	- 桌面端：`<vault>/.obsidian/plugins/xiaohongshu-importer/`
@@ -262,7 +262,7 @@ This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file f
 ## 故障排除
 
 - **“文本中未找到有效的小红书 URL”**：
-	- 确保您粘贴了一个有效的小红书分享链接或包含 URL 的文本（例如 `http://xhslink.com/a/...`）。
+	- 确保您粘贴了一个有效的小红书分享链接或包含 URL 的文本（例如 `http://xhslink.com/a/...` 或新格式）。
 - **“无法导入笔记”**：
 	- 检查您的网络连接并确保 URL 可访问。
 	- 确认笔记是公开的且未受限制。
@@ -321,5 +321,5 @@ This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file f
 
 ## 致谢
 
-- 感谢 Obsidian 社区在插件开发过程中提供的支持和反馈。
+- 感谢 Obsidian 社区在插件开发过程中提供的支持和反馈，包括修复 XHS URL 错误的社区 PR。
 - 使用 Obsidian API 构建，并受到社区插件指南的启发。
