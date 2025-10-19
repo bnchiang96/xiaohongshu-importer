@@ -1,6 +1,6 @@
 {
 	"name": "xiaohongshu-importer",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"description": "Import Xiaohongshu (小红书) notes with media and categorization into Obsidian.",
 	"main": "main.js",
 	"scripts": {

@@ -1,12 +1,12 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from "builtin-modules";
+import {builtinModules} from "module";
 
 const banner =
 	`/*
  * Xiaohongshu Importer plugin
  * Author: bnchiang96
- * Version: 1.1.1
+ * Version: 1.1.2
  */
 `;
 
@@ -32,7 +32,7 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtins],
+		...builtinModules],
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",
