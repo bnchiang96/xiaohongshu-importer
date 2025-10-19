@@ -75,7 +75,7 @@ export default class XHSImporterPlugin extends Plugin {
 
 	// Extract Xiaohongshu URL from share text
 	extractURL(shareText: string): string | null {
-		const urlMatch = shareText.match(/http:\/\/xhslink\.com\/a\/[^\s,，]+/);
+		const urlMatch = shareText.match(/http:\/\/xhslink\.com\/a?o?\/[^\s,，]+/);
 		return urlMatch ? urlMatch[0] : null;
 	}
 
