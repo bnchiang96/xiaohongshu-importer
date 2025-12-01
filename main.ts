@@ -81,10 +81,11 @@ export default class XHSImporterPlugin extends Plugin {
 				return mobileUrlMatch[0];
 		}
 		
-		// Then try to match desktop/web links
-		const webUrlMatch = shareText.match(/https:\/\/www\.xiaohongshu\.com\/discovery\/item\/[a-zA-Z0-9]+(?:\?[^\s,，]*)?/);
+		// Then try to match desktop/web links (both discovery/item and explore formats)
+		const webUrlMatch = shareText.match(/https:\/\/www\.xiaohongshu\.com\/(?:discovery\/item|explore)\/[a-zA-Z0-9]+(?:\?[^\s,，]*)?/);
 		if (webUrlMatch) {
-				return webUrlMatch[0];
+			// Normalize explore URLs to discovery/item format
+			return webUrlMatch[0].replace('/explore/', '/discovery/item/');
 		}
 		
 		return null;
