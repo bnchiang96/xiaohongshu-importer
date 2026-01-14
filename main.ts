@@ -75,9 +75,21 @@ export default class XHSImporterPlugin extends Plugin {
 
 	// Extract Xiaohongshu URL from share text
 	extractURL(shareText: string): string | null {
-		const urlMatch = shareText.match(/http:\/\/xhslink\.com\/a?o?\/[^\s,，]+/);
-		return urlMatch ? urlMatch[0] : null;
-	}
+		// First try to match mobile share links
+		const mobileUrlMatch = shareText.match(/http:\/\/xhslink\.com\/a?o?\/[^\s,，]+/);
+		if (mobileUrlMatch) {
+				return mobileUrlMatch[0];
+		}
+		
+		// Then try to match desktop/web links (both discovery/item and explore formats)
+		const webUrlMatch = shareText.match(/https:\/\/www\.xiaohongshu\.com\/(?:discovery\/item|explore)\/[a-zA-Z0-9]+(?:\?[^\s,，]*)?/);
+		if (webUrlMatch) {
+			// Normalize explore URLs to discovery/item format
+			return webUrlMatch[0].replace('/explore/', '/discovery/item/');
+		}
+		
+		return null;
+}
 
 	// Sanitize title for media filenames, removing emojis and special characters
 	sanitizeFilename(title: string): string {
